@@ -1,0 +1,9 @@
+opencv-python
+mediapipe
+ultralytics
+deepface
+torch
+webrtcvad-wheels
+pyaudio
+numpy
+scikit-learn

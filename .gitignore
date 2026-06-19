@@ -1,0 +1,4 @@
+.venv/
+infractions/
+__pycache__/
+session_recordings/
