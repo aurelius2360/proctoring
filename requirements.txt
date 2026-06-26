@@ -7,3 +7,6 @@ webrtcvad-wheels
 pyaudio
 numpy
 scikit-learn
+qrcode
+imageio-ffmpeg
+torchvision
