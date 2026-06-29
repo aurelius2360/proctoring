@@ -11,3 +11,4 @@ qrcode
 imageio-ffmpeg
 torchvision
 eyetrax
+tf-keras
