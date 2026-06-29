@@ -3,7 +3,7 @@ import argparse
 
 def check_dependencies():
     print("=" * 50)
-    print("Checking Proctoring Pipeline Dependencies...")
+    print("Checking Proctoring Pipeline (Dual Camera & LSTM) Dependencies...")
     print("=" * 50)
     
     dependencies = {
@@ -12,6 +12,7 @@ def check_dependencies():
         "ultralytics": "ultralytics",
         "deepface": "deepface",
         "torch": "torch",
+        "qrcode": "qrcode",
         "webrtcvad": "webrtcvad-wheels",
         "pyaudio": "pyaudio",
         "numpy": "numpy"
@@ -39,10 +40,11 @@ def check_dependencies():
         return True
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Proctoring Tracking Pipeline CLI and Dependency Checker")
+    parser = argparse.ArgumentParser(description="Proctoring Tracking Pipeline CLI (Dual Camera & LSTM) and Dependency Checker")
     parser.add_argument("--check-only", action="store_true", help="Only verify environment dependencies without running")
     parser.add_argument("--cam", type=int, default=0, help="Webcam capture index (default: 0)")
     parser.add_argument("--video", type=str, default=None, help="Path to video file instead of live camera")
+    parser.add_argument("--photo", type=str, default=None, help="Path to baseline ID photo for identity verification")
     args = parser.parse_args()
 
     deps_ok = check_dependencies()
@@ -54,15 +56,41 @@ if __name__ == "__main__":
         print("\nAborting launch due to missing dependencies. Run with --check-only to just check.")
         sys.exit(1)
 
+    # Prompt user for photo path if not provided via command line
+    photo_path = args.photo
+    if not photo_path:
+        import os
+        import tkinter as tk
+        from tkinter import filedialog
+        print("\nPlease select a baseline ID photo for identity verification...")
+        try:
+            root = tk.Tk()
+            root.withdraw()
+            photo_path = filedialog.askopenfilename(
+                title="Select Baseline ID Photo",
+                filetypes=[("Image Files", "*.jpg;*.jpeg;*.png")]
+            )
+        except Exception:
+            pass
+        if not photo_path:
+            photo_path = input("Enter path to baseline ID photo: ").strip()
+
+    import os
+    if not photo_path or not os.path.exists(photo_path):
+        print(f"\nError: Baseline photo file '{photo_path}' not found or not provided.")
+        sys.exit(1)
+
     # Import orchestrator and start
-    from main_orchestrator import MainOrchestrator
+    from main_orchestrator_2cam import MainOrchestrator
     
-    print(f"\nStarting Proctoring System...")
-    print("- Press 'q' in the dashboard window to exit.")
-    print("- The session will auto-terminate if proctoring infractions are breached for 5 seconds.")
+    print(f"\nStarting Dual Camera & LSTM-based Proctoring System...")
+    print("- Scan the QR code shown on the start screen with your phone camera.")
+    print("- Point your phone camera from a side angle to monitor hands & keyboard.")
+    print("- Press 'q' in any window to exit.")
+    print("- Look at the camera to verify your identity against the uploaded photo before starting the test.")
     print("-" * 50)
 
-    orchestrator = MainOrchestrator(camera_index=args.cam, video_path=args.video)
+    orchestrator = MainOrchestrator(camera_index=args.cam, video_path=args.video, baseline_photo_path=photo_path)
     try:
         orchestrator.start_pipeline()
     except KeyboardInterrupt:

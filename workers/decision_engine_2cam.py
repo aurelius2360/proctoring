@@ -33,13 +33,13 @@ class DecisionEngine2Cam(threading.Thread):
         # Rolling anomaly state
         self.rolling_anomaly_score = 0.1
         self.anomaly_threshold = 0.7
-        self.continuous_violation_duration = 3.0 # seconds
+        self.continuous_violation_duration = 60.0 # 60 seconds (1-minute delay)
         self.breach_start_time = None
         self.violation_triggered = False
         
-        # Ring buffer for raw frames (150 frames @ 30 FPS = 5 seconds)
+        # Ring buffer for raw frames (450 frames @ 30 FPS = 15 seconds)
         self.buffer_lock = threading.Lock()
-        self.video_buffer = deque(maxlen=150)
+        self.video_buffer = deque(maxlen=450)
         
         # Telemetry history for logging
         self.telemetry_history = []

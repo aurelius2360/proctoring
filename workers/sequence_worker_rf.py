@@ -64,18 +64,20 @@ class SequenceWorkerRF(threading.Thread):
         # Features: [pitch_var, yaw_var, gaze_x_var, gaze_y_var, pitch_mean, yaw_mean, gaze_x_mean, gaze_y_mean, look_away_duration]
         
         # 1. Normal behavior samples (Class 0)
-        # Low variance, centered coordinates, no look-away duration
+        # Allows normal variations in gaze coordinates and head pose since user looks across the entire screen
         X_normal = []
-        for _ in range(120):
-            pitch_var = np.random.uniform(0.05, 1.5)
-            yaw_var = np.random.uniform(0.05, 1.5)
-            gaze_x_var = np.random.uniform(0.0001, 0.008)
-            gaze_y_var = np.random.uniform(0.0001, 0.008)
+        for _ in range(150):
+            pitch_var = np.random.uniform(0.05, 3.5)
+            yaw_var = np.random.uniform(0.05, 3.5)
+            gaze_x_var = np.random.uniform(0.0001, 0.02)
+            gaze_y_var = np.random.uniform(0.0001, 0.02)
             
-            pitch_mean = np.random.uniform(-4.0, 4.0)
-            yaw_mean = np.random.uniform(-6.0, 6.0)
-            gaze_x_mean = np.random.uniform(0.40, 0.60)
-            gaze_y_mean = np.random.uniform(0.40, 0.60)
+            # Normal comfortable head pose limits when looking at screen
+            pitch_mean = np.random.uniform(-15.0, 15.0)
+            yaw_mean = np.random.uniform(-20.0, 20.0)
+            # Normal eye gaze covers the entire screen from left to right, top to bottom
+            gaze_x_mean = np.random.uniform(0.05, 0.95)
+            gaze_y_mean = np.random.uniform(0.05, 0.95)
             
             duration = 0.0
             
@@ -88,40 +90,40 @@ class SequenceWorkerRF(threading.Thread):
         # 2. Anomalous behavior samples (Class 1)
         # High variance (cheating signs/restlessness) OR extreme means (looking away) OR high duration
         X_anomalous = []
-        for _ in range(120):
+        for _ in range(150):
             case = np.random.choice(["variance", "means", "duration"])
             
             if case == "variance":
-                pitch_var = np.random.uniform(6.0, 35.0)
-                yaw_var = np.random.uniform(8.0, 45.0)
-                gaze_x_var = np.random.uniform(0.02, 0.18)
-                gaze_y_var = np.random.uniform(0.02, 0.18)
-                pitch_mean = np.random.uniform(-4.0, 4.0)
-                yaw_mean = np.random.uniform(-6.0, 6.0)
-                gaze_x_mean = np.random.uniform(0.40, 0.60)
-                gaze_y_mean = np.random.uniform(0.40, 0.60)
+                pitch_var = np.random.uniform(15.0, 45.0)
+                yaw_var = np.random.uniform(20.0, 55.0)
+                gaze_x_var = np.random.uniform(0.08, 0.25)
+                gaze_y_var = np.random.uniform(0.08, 0.25)
+                pitch_mean = np.random.uniform(-15.0, 15.0)
+                yaw_mean = np.random.uniform(-20.0, 20.0)
+                gaze_x_mean = np.random.uniform(0.05, 0.95)
+                gaze_y_mean = np.random.uniform(0.05, 0.95)
                 duration = np.random.uniform(0.0, 1.0)
             elif case == "means":
-                pitch_var = np.random.uniform(0.05, 1.5)
-                yaw_var = np.random.uniform(0.05, 1.5)
-                gaze_x_var = np.random.uniform(0.0001, 0.008)
-                gaze_y_var = np.random.uniform(0.0001, 0.008)
+                pitch_var = np.random.uniform(0.05, 3.5)
+                yaw_var = np.random.uniform(0.05, 3.5)
+                gaze_x_var = np.random.uniform(0.0001, 0.02)
+                gaze_y_var = np.random.uniform(0.0001, 0.02)
                 # Looking off-screen: extreme head pose or gaze coordinate
-                pitch_mean = np.random.choice([np.random.uniform(-25.0, -12.0), np.random.uniform(12.0, 25.0)])
-                yaw_mean = np.random.choice([np.random.uniform(-35.0, -18.0), np.random.uniform(18.0, 35.0)])
-                gaze_x_mean = np.random.choice([np.random.uniform(0.0, 0.20), np.random.uniform(0.80, 1.0)])
-                gaze_y_mean = np.random.choice([np.random.uniform(0.0, 0.20), np.random.uniform(0.80, 1.0)])
+                pitch_mean = np.random.choice([np.random.uniform(-35.0, -22.0), np.random.uniform(22.0, 35.0)])
+                yaw_mean = np.random.choice([np.random.uniform(-45.0, -28.0), np.random.uniform(28.0, 45.0)])
+                gaze_x_mean = np.random.choice([np.random.uniform(-0.35, -0.15), np.random.uniform(1.15, 1.35)])
+                gaze_y_mean = np.random.choice([np.random.uniform(-0.35, -0.15), np.random.uniform(1.15, 1.35)])
                 duration = np.random.uniform(0.0, 1.5)
             else: # duration
-                pitch_var = np.random.uniform(0.05, 1.5)
-                yaw_var = np.random.uniform(0.05, 1.5)
-                gaze_x_var = np.random.uniform(0.0001, 0.008)
-                gaze_y_var = np.random.uniform(0.0001, 0.008)
-                pitch_mean = np.random.uniform(-4.0, 4.0)
-                yaw_mean = np.random.uniform(-6.0, 6.0)
-                gaze_x_mean = np.random.uniform(0.40, 0.60)
-                gaze_y_mean = np.random.uniform(0.40, 0.60)
-                duration = np.random.uniform(3.0, 10.0) # Look away duration exceeds threshold
+                pitch_var = np.random.uniform(0.05, 3.5)
+                yaw_var = np.random.uniform(0.05, 3.5)
+                gaze_x_var = np.random.uniform(0.0001, 0.02)
+                gaze_y_var = np.random.uniform(0.0001, 0.02)
+                pitch_mean = np.random.uniform(-15.0, 15.0)
+                yaw_mean = np.random.uniform(-20.0, 20.0)
+                gaze_x_mean = np.random.uniform(0.05, 0.95)
+                gaze_y_mean = np.random.uniform(0.05, 0.95)
+                duration = np.random.uniform(3.5, 10.0) # Look away duration exceeds threshold
 
             X_anomalous.append([
                 pitch_var, yaw_var, gaze_x_var, gaze_y_var,
@@ -130,10 +132,10 @@ class SequenceWorkerRF(threading.Thread):
             ])
 
         X = np.vstack([X_normal, X_anomalous])
-        y = np.hstack([np.zeros(120), np.ones(120)])
+        y = np.hstack([np.zeros(150), np.ones(150)])
         
         self.model.fit(X, y)
-        print("[SequenceWorkerRF] Scikit-Learn RandomForestClassifier pre-fitted successfully on behavioral bounds.")
+        print("[SequenceWorkerRF] Scikit-Learn RandomForestClassifier pre-fitted successfully on realistic behavioral bounds.")
 
     def get_latest_data(self):
         with self.data_lock:

@@ -29,7 +29,6 @@ class MainOrchestrator:
         self.cancel_btn_coords = (0, 0, 0, 0)
         self.whole_test_writer = None
         self.gaze_history = deque(maxlen=90)  # ~3 seconds of history at 30 FPS
-        self.second_cam_rotation = 0
         
         # Thread-safe Queues
         self.gaze_queue = queue.Queue(maxsize=1)
@@ -287,13 +286,6 @@ class MainOrchestrator:
                 cv2.putText(sec_frame, "Scan the QR code to connect your phone", (145, 390), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1, cv2.LINE_AA)
                 cv2.putText(sec_frame, f"URL: {self.second_camera_worker.server_url}", (155, 415), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
             else:
-                # Rotate secondary camera frame according to current rotation state
-                if self.second_cam_rotation == 90:
-                    sec_frame = cv2.rotate(sec_frame, cv2.ROTATE_90_CLOCKWISE)
-                elif self.second_cam_rotation == 180:
-                    sec_frame = cv2.rotate(sec_frame, cv2.ROTATE_180)
-                elif self.second_cam_rotation == 270:
-                    sec_frame = cv2.rotate(sec_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
                 sec_frame = cv2.resize(sec_frame, (640, 480))
 
             # Render HUD and Dashboards
@@ -323,16 +315,10 @@ class MainOrchestrator:
                     cv2.waitKey(2000)
                     break
 
-            # Handle keystrokes (Press 'q' or ESC key 27 to cancel/exit, 'r' to rotate second cam, 'e' to end test)
+            # Handle keystrokes (Press 'q' or ESC key 27 to cancel/exit)
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q') or key == 27:
                 print("[Orchestrator] User requested cancellation/termination via keyboard.")
-                break
-            elif key == ord('r') or key == ord('R'):
-                self.second_cam_rotation = (self.second_cam_rotation + 90) % 360
-                print(f"[Orchestrator] Rotated secondary camera feed by {self.second_cam_rotation} degrees.")
-            elif key == ord('e') or key == ord('E'):
-                print("[Orchestrator] User requested session completion (end test).")
                 break
 
             elapsed = time.time() - start_time
@@ -361,12 +347,6 @@ class MainOrchestrator:
                 if c_x1 <= x <= c_x2 and c_y1 <= y <= c_y2:
                     print("[Orchestrator] Cancel button clicked. Exiting...")
                     self.trigger_termination()
-            elif self.session_state == "PROCTORING":
-                # End Test Button Click Check
-                ex1, ey1, ex2, ey2 = (15, 15, 120, 45)
-                if ex1 <= x <= ex2 and ey1 <= y <= ey2:
-                    print("[Orchestrator] End Test button clicked. Exiting session...")
-                    self.trigger_termination()
 
     def _start_whole_test_recording(self, frame):
         os.makedirs("session_recordings", exist_ok=True)
@@ -387,11 +367,6 @@ class MainOrchestrator:
 
         if self.session_state == "PROCTORING":
             feed = np.zeros_like(frame)
-            # Draw END TEST button
-            ex1, ey1, ex2, ey2 = (15, 15, 120, 45)
-            cv2.rectangle(feed, (ex1, ey1), (ex2, ey2), (0, 0, 180), -1)
-            cv2.rectangle(feed, (ex1, ey1), (ex2, ey2), (255, 255, 255), 1)
-            cv2.putText(feed, "END TEST", (ex1 + 18, ey1 + 18), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2, cv2.LINE_AA)
 
         tl_x, tl_y = int(0.03 * w), int(0.03 * h)
         br_x, br_y = int(0.97 * w), int(0.97 * h)
@@ -517,9 +492,6 @@ class MainOrchestrator:
 
             if not gaze_data.get("face_detected", False):
                 cv2.putText(feed, "FACE NOT DETECTED - PLEASE LOOK AT THE TARGET BALL", (w // 2 - 210, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2, cv2.LINE_AA)
-            elif gaze_data.get("calibration_warning"):
-                warn_text = gaze_data["calibration_warning"].upper()
-                cv2.putText(feed, warn_text, (w // 2 - 120, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 165, 255), 2, cv2.LINE_AA)
 
         # Start Screen with responsive layout (QR on left, Start button on right)
         if self.session_state == "START_SCREEN":
@@ -825,10 +797,10 @@ class MainOrchestrator:
                     pred_x, pred_y = gaze_data.get("screen_gaze", (0.5, 0.5))
                     gx = int(pred_x * w)
                     gy = int(pred_y * h)
-                    cv2.line(det, left_iris, (gx, gy), (255, 255, 0), 2)
-                    cv2.line(det, right_iris, (gx, gy), (255, 255, 0), 2)
-                    cv2.circle(det, (gx, gy), 6, (255, 255, 0), -1)
-                    cv2.circle(det, (gx, gy), 10, (255, 255, 0), 1)
+                    
+                    # Draw EyeTrax target cursor style instead of drawing cyan gaze vector lines
+                    from eyetrax.utils.draw import draw_cursor
+                    draw_cursor(det, gx, gy, 1.0, radius_outer=12, radius_inner=8, color_outer=(0, 0, 255), color_inner=(255, 255, 255))
 
         rvec_list = gaze_data.get("rvec", None)
         tvec_list = gaze_data.get("tvec", None)

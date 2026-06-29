@@ -606,12 +606,10 @@ class MainOrchestrator:
                     pred_x, pred_y = gaze_data.get("screen_gaze", (0.5, 0.5))
                     gx = int(pred_x * w)
                     gy = int(pred_y * h)
-                    # Cyan gaze vector lines
-                    cv2.line(det, left_iris, (gx, gy), (255, 255, 0), 2)
-                    cv2.line(det, right_iris, (gx, gy), (255, 255, 0), 2)
-                    # Gaze focus circle
-                    cv2.circle(det, (gx, gy), 6, (255, 255, 0), -1)
-                    cv2.circle(det, (gx, gy), 10, (255, 255, 0), 1)
+                    
+                    # Draw EyeTrax target cursor style instead of drawing cyan gaze vector lines
+                    from eyetrax.utils.draw import draw_cursor
+                    draw_cursor(det, gx, gy, 1.0, radius_outer=12, radius_inner=8, color_outer=(0, 0, 255), color_inner=(255, 255, 255))
 
         # Draw 3D Head Pose Axes projected on nose
         rvec_list = gaze_data.get("rvec", None)
