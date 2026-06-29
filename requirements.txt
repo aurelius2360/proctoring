@@ -10,3 +10,4 @@ scikit-learn
 qrcode
 imageio-ffmpeg
 torchvision
+eyetrax
